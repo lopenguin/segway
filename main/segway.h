@@ -25,23 +25,29 @@ class Segway {
   SFEVL53L1X m_distSen{};
 
   int m_speed{0};
-  unsigned long lastICMtime{0};
+  unsigned long m_lastICMtime{0};
+  unsigned long m_lastSpeedAvg{0};
+
+  double m_lastError{ 0 };
 public:
   Segway(Motor l, Motor r) : m_leftMotor{l}, m_rightMotor{r}
     {/*does nothing*/}
 
   void begin();
 
-  void drive(int s);
-
   /* Uses accel data to compute angle and gyro data to determine angular speed
   theta = atan(accZ / accX)
   theta-dot = gyrY
   */
-  double getError();
+  double getError(double& e);
+
+  /* does the high level control */
+  void stabilize();
 
 private:
   /* Accepts -255 <= s <= 255 */
   double speedToAngle(int s);
   double speedToAngle() { return speedToAngle(m_speed); }
+public:
+  void drive(int s);
 };

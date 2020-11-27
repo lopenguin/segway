@@ -1,6 +1,11 @@
 /* Central code file for the segway's controls.
 More information will be added here someday.
 
+Future:
+ * could make angle offset auto-calibrate at startup
+ * Use feed forward for motion
+ * Motion profiling ?
+
 Written by Lorenzo Shaikewitz
 */
 
@@ -8,18 +13,19 @@ Written by Lorenzo Shaikewitz
 #include "segway.h"
 #include "sensors.h"
 
-const int enPinl{23};
-const int in1Pinl{22};
-const int in2Pinl{17};
-const int enPinr{16};
-const int in1Pinr{20};
-const int in2Pinr{21};
+const int enPinr{23};
+const int in1Pinr{22};
+const int in2Pinr{17};
+const int enPinl{15};
+const int in1Pinl{20};
+const int in2Pinl{21};
 Segway segway{ Motor{enPinl, in1Pinl, in2Pinl},
                Motor{enPinr, in1Pinr, in2Pinr} };
 
 void setup() {
   Wire.begin();
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, INPUT);
   segway.begin();
 
   // to make sure we get ICM data
@@ -27,6 +33,7 @@ void setup() {
 }
 
 void loop() {
-  segway.getError();
-  delay(100);
+  //Serial.println(segway.getError());
+  segway.stabilize();
+  //delay(100);
 }

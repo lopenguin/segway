@@ -33,7 +33,7 @@ void Motor::drive(int s) {
   }
 
   // check if already set at this speed
-  if (m_speed == s || m_speed == -s)
+  if ((m_speed == s || m_speed == -s) && s != 0)
     return;
 
   m_speed = s;
