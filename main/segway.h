@@ -27,6 +27,7 @@ class Segway {
   int m_speed{0};
   unsigned long m_lastICMtime{0};
   unsigned long m_lastSpeedAvg{0};
+  unsigned long m_lastPIDtime{0};
 
   double m_lastError{ 0 };
 public:
@@ -48,6 +49,8 @@ private:
   /* Accepts -255 <= s <= 255 */
   double speedToAngle(int s);
   double speedToAngle() { return speedToAngle(m_speed); }
+
 public:
   void drive(int s);
+  void drive();
 };

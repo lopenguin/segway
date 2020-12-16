@@ -18,7 +18,7 @@ void Segway::begin() {
   m_leftMotor.begin();
   m_rightMotor.begin();
   senBegin(m_ICM);
-  senBegin(m_distSen);
+  //senBegin(m_distSen);
 
   m_lastICMtime = millis();
   m_lastSpeedAvg = millis();
@@ -30,7 +30,7 @@ void Segway::begin() {
 
 double Segway::getError(double& e) {
   // Calibration constants
-  static const double angleOffset{ 0 }; // whatever the reading is when upright
+  static const double angleOffset{ -0.1 }; // whatever the reading is when upright
 
   // Get ICM data
   {
@@ -48,7 +48,7 @@ double Segway::getError(double& e) {
   // accZ is up/down, accX is forward/backward
   double accAngle{ atan(m_ICM.accX() / m_ICM.accZ()) - angleOffset };
 
-  // get gyrY data
+  // get gyrY data (temporarily removed)
   double gyrY{ m_ICM.gyrY() };
 
   // We want the response to be based on angle and gyro data
@@ -57,7 +57,7 @@ double Segway::getError(double& e) {
   // acc: we care about larger deviations from our ideal angle
   // So we multiple gyro by something big, acc by something small
 
-  // Serial.print(accAngle * 180 / 3.14);
+  // Serial.println(accAngle); //* 180 / 3.14);
   // Serial.print(" deg | ");
   // Serial.print(gyrY);
   // Serial.print(" dps | const: ");
@@ -68,29 +68,35 @@ double Segway::getError(double& e) {
 
   // - gyrY is because gyro is neg when angle is pos
   e = (accAngle - speedToAngle()) * accConst - gyrY;
+  // Serial.println(e);
   return 1;
 }
 
 // we only get new data every 50 ms
 void Segway::stabilize() {
+  // update the driving algorithm
+  //drive();
   // give it a time average
   int numAvg{ 3 };  // multiple of 50 ms
   static int speedBuf{ 0 };
   int speed{ 0 };
-  int minSpeed{ 150 };
+  int minSpeed{ 180 };
 
   // Constants
-  double kp{ 0.4 };
+  double kp{ 1.8 };
   double ki{ 0 };
   double kd{ 0 };
 
   double error{ 0 };
   if (!getError(error))
     // return if not gettting new data
+    // this causes this function to be run once every 50 ms
     return;
   //Serial.println(error);
   // propotional term
   double result{ error * kp };
+  // Serial.print("Error: ");
+  // Serial.println(result);
   // add integral term
   static double totError{ 0 };
   totError += error;
@@ -98,25 +104,26 @@ void Segway::stabilize() {
   // add derivative term
   result += (error - m_lastError) * kd;
   m_lastError = error;
-  //Serial.println(result);
+  // Serial.println(result);
 
-  // Convert into speed
-  if (result > 0)
-    // we are tilting forward, wanna spin wheels backwards
-    speed = max(-255, -(minSpeed + result));
-  else
-    // we are tilting backward, wanna spin wheels forward
-    speed = min( 255, -(-minSpeed + result));
-  if (abs(speed) < minSpeed)
-    speed = 0;
-  // go!
+  // convert into speed
+  // Positive result means tilting forward, but we want wheels to spin backwards
+  speed = -static_cast<int>(result);
+  if (result > 255)
+    speed = 255;
+  else if (result < -255)
+    speed = -255;
 
   speedBuf += speed;
   unsigned long t{ millis() };
-  if (t - m_lastSpeedAvg > numAvg * 50) {
+  if (t - m_lastSpeedAvg > static_cast<unsigned int>(numAvg) * 50) {
     Serial.print("Speed: ");
-    Serial.println(speedBuf / numAvg);
-    drive(speedBuf / numAvg);
+    speedBuf /= numAvg;
+    if (abs(speedBuf) < minSpeed)
+      speedBuf = 0;
+    Serial.println(speedBuf);
+    m_lastPIDtime = t;
+    drive(speedBuf);
     speedBuf = 0;
     m_lastSpeedAvg = t;
   }
@@ -128,12 +135,20 @@ double Segway::speedToAngle(int s) {
   return s;
 }
 
-
-/* Note that wheels should move reverse when the car is tilting forward
+/* Note that wheels should move reverse when the car is tilting forward.
+This is used for temporary wheel changes; use setSpeed to change the segway's speed
 */
 void Segway::drive(int s) {
   m_leftMotor.drive(s);
   m_rightMotor.drive(s);
+}
+void Segway::drive() {
+  unsigned long t{ millis() };
+  // stops PID correcting drive after certain number of ms
+  if (t - m_lastPIDtime > 65) {
+    drive(m_speed);
+
+  }
 }
 
 /**********************************

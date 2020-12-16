@@ -33,7 +33,10 @@ void setup() {
 }
 
 void loop() {
-  //Serial.println(segway.getError());
+  // double e{ 0 };
+  // segway.getError(e);
+  // Serial.println(e*0.4);
   segway.stabilize();
-  //delay(100);
+  //segway.drive(150);
+  // delay(100);
 }
