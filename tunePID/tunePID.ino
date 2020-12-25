@@ -1,10 +1,6 @@
-/* Central code file for the segway's controls.
-More information will be added here someday.
-
-Future:
- * could make angle offset auto-calibrate at startup
- * Use feed forward for motion
- * Motion profiling ?
+/* This is mainly an interface for simple tuning of the Segway's PID control.
+Entering numbers into the serial monitor allows you to change the parameters.
+You change one at a time.
 
 Written by Lorenzo Shaikewitz
 */
@@ -22,6 +18,8 @@ const int in2Pinl{21};
 Segway segway{ Motor{enPinl, in1Pinl, in2Pinl},
                Motor{enPinr, in1Pinr, in2Pinr} };
 
+double kp{ 485 };
+
 void setup() {
   Wire.begin();
   Serial.begin(115200);
@@ -30,14 +28,23 @@ void setup() {
 
   // to make sure we get ICM data
   delay(100);
+  Serial.println("Constant beginning at " + static_cast<String>(kp));
 }
 
 void loop() {
   // double e{ 0 };
   // segway.getError(e);
   // Serial.println(e*0.4);
-  segway.stabilize();
+  segway.stabilize(kp);
   //segway.drive(255);
   // delay(100);
 
+  // code for reading the kp
+  if (Serial.available()) {
+    double temp = Serial.parseFloat();
+    if (temp < 0.01)
+      return;
+    kp = temp;
+    Serial.println("Constant updated to " + static_cast<String>(kp));
+  }
 }

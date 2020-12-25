@@ -61,33 +61,33 @@ double Segway::getError(double& e) {
 
   // Must be between 0 and 1
   // = (tau  / (tau + delta_t)) = (0.75 s / (0.75 s + 0.05 s))
-  float accConst{ 0.998 };
+  float accConst{ 0.996 };
 
   // - gyrY is because gyro is neg when angle is pos
   e = (accAngle - speedToAngle())*accConst - gyrX*(1-accConst);
 
-  Serial.print(accAngle * 180 / 3.14);
-  Serial.print(" deg | ");
-  Serial.print(gyrX);
-  Serial.print(" dps | const: ");
-  Serial.println(e);
+  // Serial.print(accAngle * 180 / 3.14);
+  // Serial.print(" deg | ");
+  // Serial.print(gyrX);
+  // Serial.print(" dps | const: ");
+  // Serial.println(e);
 
   return 1;
 }
 
 
 // we only get new data every 50 ms
-void Segway::stabilize() {
+void Segway::stabilize(double kp) {
   // update the driving algorithm
   //drive();
   // give it a time average
-  int numAvg{ 3 };  // multiple of 50 ms
+  int numAvg{ 2 };  // multiple of 50 ms
   static int speedBuf{ 0 };
   int speed{ 0 };
   int minSpeed{ 120 };
 
   // Constants
-  double kp{ 648 };
+  // double kp{ 648 };
   double ki{ 0 };
   double kd{ 0 };
 
@@ -121,11 +121,11 @@ void Segway::stabilize() {
   speedBuf += speed;
   unsigned long t{ millis() };
   if (t - m_lastSpeedAvg > static_cast<unsigned int>(numAvg) * 50) {
-    Serial.print("Speed: ");
+    // Serial.print("Speed: ");
     speedBuf /= numAvg;
     if (abs(speedBuf) < minSpeed)
       speedBuf = 0;
-    Serial.println(speedBuf);
+    // Serial.println(speedBuf);
     m_lastPIDtime = t;
     drive(speedBuf);
     speedBuf = 0;
