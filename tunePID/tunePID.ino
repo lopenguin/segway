@@ -18,7 +18,7 @@ const int in2Pinl{21};
 Segway segway{ Motor{enPinl, in1Pinl, in2Pinl},
                Motor{enPinr, in1Pinr, in2Pinr} };
 
-double kp{ 485 };
+double kp{ 790 };
 
 void setup() {
   Wire.begin();
