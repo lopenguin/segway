@@ -43,7 +43,7 @@ public:
   double getError(double& e);
 
   /* does the high level control */
-  void stabilize(double kp);
+  void stabilize(double kp, double ki, double kd);
 
 private:
   /* Accepts -255 <= s <= 255 */
